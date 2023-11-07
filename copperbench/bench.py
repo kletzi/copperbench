@@ -60,6 +60,9 @@ class BenchConfig:
     cmd_cwd: Optional[bool] = False
     starexec_compatible: Optional[bool] = False
     instances_are_parameters: Optional[bool] = False
+    counter_start: int = 0
+    counter_step: int = 1
+    counter_max: Optional[int] = None
 
 
 def main() -> None:
@@ -177,6 +180,7 @@ def main() -> None:
 
             start_scripts = []
             config_line = 0
+            count = bench_config.counter_start
             for config_name, config in configs.items():
                 config_line += 1
                 config = "" if config == "None" else config
@@ -314,6 +318,11 @@ def main() -> None:
 
                         cmd = re.sub(r"\$timeout", str(bench_config.timeout * bench_config.timeout_factor), cmd)
                         cmd = re.sub(r"\$seed", str(random.randint(0, 2 ** 32)), cmd)
+                        cmd = re.sub(r"\$counter", str(count), cmd)
+                        count += bench_config.counter_step
+                        if bench_config.counter_max is not None and count >= bench_config.counter_max:
+                            print(f'Counter exceeded maximum limit {bench_config.counter_max}. Exiting...')
+                            exit(2)
 
                         rs_file = Path(bench_config.runsolver_path).name
                         runsolver_str = Path(shm_dir, 'input', rs_file)
